@@ -12,7 +12,12 @@ st.set_page_config(
 
 st.title("🩺 Pneumonia Detection using VGG16")
 
-MODEL_PATH = "cnn_model.h5"
+from huggingface_hub import hf_hub_download
+
+MODEL_PATH = hf_hub_download(
+    repo_id="zainabfatima9/pnemonia-cnn-model",
+    filename="cnn_model.h5"
+)
 
 if not os.path.exists(MODEL_PATH):
     st.error(f"Model file not found: {MODEL_PATH}")

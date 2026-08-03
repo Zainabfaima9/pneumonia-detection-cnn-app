@@ -10,7 +10,7 @@ st.set_page_config(
     layout="centered"
 )
 
-st.title("🩺 Pneumonia Detection using VGG16")
+st.title("🩺 Pneumonia Detection using CNN")
 
 from huggingface_hub import hf_hub_download
 

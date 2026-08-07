@@ -73,7 +73,7 @@ VGG16 came out ahead — and that gap is the interesting part, not just the numb
 
 **[Try it yourself → \[https://pneumonia-detection-cnn-app-a4j2vpt7bpfvfqzupxdjwn.streamlit.app/]](#)**
 
-Upload any chest X-ray and see the model's prediction instantly — no setup required.
+Upload any chest X-ray and see the model's prediction instantly. The trained model is hosted on hugging face hub and loaded dynamically by the app (due to file size constrains on GitHub).
 
 ---
 
@@ -100,7 +100,7 @@ This project started from a publicly available Kaggle tutorial notebook, which I
 
 ## Tech Stack
 
-`Python` · `TensorFlow / Keras` · `Kaggle Notebooks (GPU)` · `Streamlit` · `GitHub`
+`Python` · `TensorFlow / Keras` · `Kaggle Notebooks (GPU)` · `Streamlit` · `GitHub` ·  `hugging face hub (model hosting) ` ·  `Github `
 
 ---
 

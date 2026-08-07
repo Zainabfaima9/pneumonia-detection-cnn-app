@@ -56,11 +56,17 @@ Both were trained for 15 epochs on an 80/20 train-test split, then evaluated on 
 
 VGG16 came out ahead — and that gap is the interesting part, not just the numbers. It's a clear, hands-on demonstration of *why* transfer learning matters for medical imaging: the pretrained network arrived already knowing how to recognize general visual patterns, so it needed far less data to specialize in X-rays than a model starting from zero.
 
-![Training Accuracy](screenshots/training_accuracy.png)
+![Training Accuracy 1](screenshots/training_accuracy.png)
+![Training Accuracy 2](screenshots/training_accuracy_1.png)
+![Training Accuracy 3](screenshots/training_accuracy_2.png)
+![Training Accuracy 4](screenshots/training_accuracy_3.png)
+![Training Accuracy 5](screenshots/training_accuracy_4.png)
+![Training Accuracy 6](screenshots/training_accuracy_5.png)
 
 ![Pneumonia Detection Result](screenshots/pneumonia_result.png)
 
-![Normal Result](screenshots/normal_result.png)
+![Normal reusult](screenshots/normal_result.png)
+
 ---
 
 ## 🚀 Live Demo

@@ -10,8 +10,7 @@
 
 Diagnostic imaging is only as fast as the specialists available to read it — and in many parts of the world, that's the real bottleneck, not the equipment. As a Medical Imaging Technology student, I wanted to understand, hands-on, whether AI could meaningfully close that gap: not replacing a radiologist's judgment, but giving frontline healthcare workers a fast, first-pass signal when one isn't immediately available.
 
-This project is also a personal marker of the direction I want to take my career — staying rooted in clinical imaging while building the technical fluency to eventually design AI tools that are actually usable in the settings that need them most.
-
+This project is also a personal marker of the direction I want to take my career — staying rooted in clinical imaging while building the technical fluency to eventually design AI tools that are actually usable  in the settings that need them most, and to understand the healthcare systems and management decisions that determine whether they get used at all .
 ---
 
 ## What it does
@@ -80,6 +79,35 @@ Upload any chest X-ray and see the model's prediction instantly *(This demo uses
 ## Clinical Interpretation
 
 This model performs well on its test set, but it's trained on a modest, single-source public dataset and hasn't been clinically validated — so it's not a diagnostic tool. What it *is*: a working proof of concept for how AI-assisted screening could one day give healthcare workers a fast, useful signal in settings where specialist review is delayed or unavailable. Getting from here to real-world clinical use would take far larger and more diverse data, rigorous validation, and regulatory approval.
+
+---
+
+## Beyond the Model: Implementation Considerations
+
+A working model is only the first step. For a tool like this to 
+actually help in a resource-limited setting, several non-technical 
+factors matter as much as accuracy:
+
+- **Infrastructure**: Reliable internet and hardware would be 
+  needed at the point of care — a real constraint in many rural 
+  and district-level facilities
+- **Training**: Frontline staff would need minimal, targeted 
+  training to correctly interpret and trust an AI-generated 
+  first-pass signal, without over-relying on it
+- **Regulatory path**: Clinical deployment requires approval 
+  processes that vary significantly by country, and would need 
+  to be navigated before any real-world use
+- **Cost-effectiveness**: Even a modest AI screening layer could 
+  potentially reduce diagnostic delay and downstream costs — 
+  though this needs a proper cost-effectiveness analysis, not 
+  just technical benchmarking
+
+This implementation layer — how a technically sound tool actually 
+becomes usable, trusted, and sustainable within a real healthcare 
+system — is what I want to explore further. It's a large part of 
+why I'm pursuing graduate study that bridges medical technology 
+and healthcare management, rather than staying purely on the 
+technical side.
 
 ---
 

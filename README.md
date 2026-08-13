@@ -10,7 +10,7 @@
 
 I'm a Medical Imaging Technologist, not a radiologist — and that distinction is the actual starting point of this project. Technologists don't diagnose. We capture images and manage the workflow that decides how fast a patient's scan gets seen. In many settings, that workflow is the real bottleneck: a scan can be technically perfect and still sit in a queue if there aren't enough specialists to read it in time.
 
-That's the gap I wanted to explore, hands-on: not "can AI diagnose pneumonia," but **can AI help prioritize which X-rays need a radiologist's eyes first?** So I taught myself Python from scratch, built and compared two deep learning models, and deployed the better-performing one as a live web app that flags X-rays showing signs consistent with pneumonia for prioritized review.
+That's the gap I wanted to explore, hands-on: not "can AI diagnose pneumonia," but **can AI help prioritize which X-rays need a radiologist's eyes first?** So I taught myself Python from scratch, built and compared two deep learning models, and deployed one as a live web app that flags X-rays showing signs consistent with pneumonia for prioritized review(the CNN model-see live demo below).
 
 This project is also a marker of the direction I want to take my career — staying rooted in imaging technology while building the technical fluency to design AI tools that actually fit into how imaging departments work, not just tools that score well on a test set.
 

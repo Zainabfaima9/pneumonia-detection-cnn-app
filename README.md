@@ -2,7 +2,7 @@
 
 > A prototype tool that flags chest X-rays showing signs consistent with pneumonia — built by a Medical Imaging Technology student to explore how AI can support imaging workflows, not replace radiologist interpretation.
 
-**[🚀 Try the live app](#Livedemo1)** &nbsp;|&nbsp; **[📊 View results](#results)** &nbsp;|&nbsp; **[🧠 Model interpretability](#model-interpretability-grad-cam)**
+**[🚀 Try the live app](#Livedemo)** &nbsp;|&nbsp; **[📊 View results](#results)** &nbsp;|&nbsp; **[🧠 Model interpretability](#model-interpretability-grad-cam)**
 
 ---
 

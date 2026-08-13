@@ -82,7 +82,7 @@ On the pneumonia-flagged X-ray above, the heatmap concentrates on the lower lung
 
 ---
 
-## 🚀 Live Demo
+## Live Demo
 
 **[Try it yourself → https://pneumonia-detection-cnn-app-a4j2vpt7bpfvfqzupxdjwn.streamlit.app/](#)**
 

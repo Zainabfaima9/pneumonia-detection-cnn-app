@@ -1,27 +1,31 @@
-# 🫁 AI-Based Pneumonia Detection from Chest X-Rays
+# 🫁 AI-Assisted Pneumonia Triage from Chest X-Rays
 
-> An AI-assisted screening tool that classifies chest X-rays as *Normal* or *Pneumonia*, built to explore how deep learning can support faster, more accessible diagnosis — especially where radiologist access is limited.
+> A prototype tool that flags chest X-rays showing signs consistent with pneumonia — built by a Medical Imaging Technology student to explore how AI can support imaging workflows, not replace radiologist interpretation.
 
-**[🚀 Try the live app](#)** &nbsp;|&nbsp; **[📊 View results](#results)** &nbsp;|&nbsp; **[🧠 Read the methodology](#methodology)**
+**[🚀 Try the live app](#)** &nbsp;|&nbsp; **[📊 View results](#results)** &nbsp;|&nbsp; **[🧠 Model interpretability](#model-interpretability-grad-cam)**
 
 ---
 
 ## Why this project
 
-Diagnostic imaging is only as fast as the specialists available to read it — and in many parts of the world, that's the real bottleneck, not the equipment. As a Medical Imaging Technology student, I wanted to understand, hands-on, whether AI could meaningfully close that gap: not replacing a radiologist's judgment, but giving frontline healthcare workers a fast, first-pass signal when one isn't immediately available.
+I'm a Medical Imaging Technologist, not a radiologist — and that distinction is the actual starting point of this project. Technologists don't diagnose. We capture images and manage the workflow that decides how fast a patient's scan gets seen. In many settings, that workflow is the real bottleneck: a scan can be technically perfect and still sit in a queue if there aren't enough specialists to read it in time.
 
-This project is also a personal marker of the direction I want to take my career — staying rooted in clinical imaging while building the technical fluency to eventually design AI tools that are actually usable  in the settings that need them most, and to understand the healthcare systems and management decisions that determine whether they get used at all .
+That's the gap I wanted to explore, hands-on: not "can AI diagnose pneumonia," but **can AI help prioritize which X-rays need a radiologist's eyes first?** So I taught myself Python from scratch, built and compared two deep learning models, and deployed the better-performing one as a live web app that flags X-rays showing signs consistent with pneumonia for prioritized review.
+
+This project is also a marker of the direction I want to take my career — staying rooted in imaging technology while building the technical fluency to design AI tools that actually fit into how imaging departments work, not just tools that score well on a test set.
+
 ---
 
 ## What it does
 
-Upload a chest X-ray → the model classifies it as **Normal** or **Pneumonia** in real time, through a live web app.
+Upload a chest X-ray → the model flags it as **Normal** or **showing signs consistent with Pneumonia**, in real time, through a live web app — framed as a triage aid, not a diagnosis.
 
 | | |
 |---|---|
 | 🖼️ **Input** | Chest X-ray image (JPEG/PNG) |
 | 🧠 **Models** | Custom CNN \| VGG16 (Transfer Learning) |
-| ⚡ **Output** | Instant classification |
+| 👁️ **Interpretability** | Grad-CAM heatmaps — shows *where* the model is looking |
+| ⚡ **Output** | Instant flag + visual explanation |
 | 🌐 **Deployment** | Streamlit Cloud, live and public |
 
 ---
@@ -64,50 +68,38 @@ VGG16 came out ahead — and that gap is the interesting part, not just the numb
 
 ![Pneumonia Detection Result](Screenshot/pneumonia_result.png)
 
-![Normal reusult](Screenshot/normal_result.png)
+![Normal Result](Screenshot/normal_result.png)
+
+---
+
+## Model Interpretability (Grad-CAM)
+
+A high accuracy score means nothing to a clinician if they can't see *why* the model made a call — and for a tool meant to support a real imaging workflow, that trust gap is the whole problem, not a footnote. So I applied **Grad-CAM (Gradient-weighted Class Activation Mapping)** to visualize which regions of each X-ray most influenced the model's prediction.
+
+![Grad-CAM Heatmap](Screenshot/gradcam_result.png)
+
+On the pneumonia-flagged X-ray above, the heatmap concentrates on the lower lung fields — the anatomical region where pneumonia-related opacity typically appears — rather than on bone, soft tissue, or image edges. That's not proof the model is clinically reliable, but it is evidence it's attending to plausible regions rather than shortcuts in the image, which is the minimum a technologist or radiologist would need to see before trusting a flag like this at all.
 
 ---
 
 ## 🚀 Live Demo
 
-**[Try it yourself → \[https://pneumonia-detection-cnn-app-a4j2vpt7bpfvfqzupxdjwn.streamlit.app/]](#)**
+**[Try it yourself → https://pneumonia-detection-cnn-app-a4j2vpt7bpfvfqzupxdjwn.streamlit.app/](#)**
 
-Upload any chest X-ray and see the model's prediction instantly *(This demo uses the CNN model ; Vgg16 results are shown above for comparison.)*. The trained model is hosted on hugging face hub and loaded dynamically by the app (due to file size constrains on GitHub).
-
----
-
-## Clinical Interpretation
-
-This model performs well on its test set, but it's trained on a modest, single-source public dataset and hasn't been clinically validated — so it's not a diagnostic tool. What it *is*: a working proof of concept for how AI-assisted screening could one day give healthcare workers a fast, useful signal in settings where specialist review is delayed or unavailable. Getting from here to real-world clinical use would take far larger and more diverse data, rigorous validation, and regulatory approval.
+Upload any chest X-ray and see the model's prediction instantly *(this demo uses the CNN model; VGG16 results are shown above for comparison)*. The trained model is hosted on Hugging Face Hub and loaded dynamically by the app, due to file size constraints on GitHub.
 
 ---
 
-## Beyond the Model: Implementation Considerations
+## From Prototype to Practice
 
-A working model is only the first step. For a tool like this to 
-actually help in a resource-limited setting, several non-technical 
-factors matter as much as accuracy:
+Building the model was the easy part. Turning it into something an imaging department could actually trust and use is a different problem entirely — and it's the problem I'm more interested in than the model itself:
 
-- **Infrastructure**: Reliable internet and hardware would be 
-  needed at the point of care — a real constraint in many rural 
-  and district-level facilities
-- **Training**: Frontline staff would need minimal, targeted 
-  training to correctly interpret and trust an AI-generated 
-  first-pass signal, without over-relying on it
-- **Regulatory path**: Clinical deployment requires approval 
-  processes that vary significantly by country, and would need 
-  to be navigated before any real-world use
-- **Cost-effectiveness**: Even a modest AI screening layer could 
-  potentially reduce diagnostic delay and downstream costs — 
-  though this needs a proper cost-effectiveness analysis, not 
-  just technical benchmarking
+- **Workflow fit:** A triage tool only helps if it plugs into how technologists already prioritize studies — not if it adds a second system to check.
+- **Clinical validation:** This model has seen one small, single-source dataset. Real deployment would require testing across diverse patient populations, scanner types, and clinical sites.
+- **Regulatory pathway:** Any AI tool touching patient care — even a triage aid, not a diagnostic one — needs a clear route through medical device regulation (e.g., FDA, CE marking) before it can be used outside a research setting.
+- **Trust and adoption:** Explainability tools like Grad-CAM are a start, but adoption ultimately depends on technologists and radiologists being part of building the tool, not just receiving it.
 
-This implementation layer — how a technically sound tool actually 
-becomes usable, trusted, and sustainable within a real healthcare 
-system — is what I want to explore further. It's a large part of 
-why I'm pursuing graduate study that bridges medical technology 
-and healthcare management, rather than staying purely on the 
-technical side.
+This is the layer I want to spend my career working in: not just building models, but understanding how a promising prototype like this one actually becomes a tool a hospital would adopt.
 
 ---
 
@@ -116,19 +108,20 @@ technical side.
 - Trained on a relatively small dataset (~5,800 images) from a single source
 - No demographic diversity metadata available
 - Not validated against real clinical outcomes
-- Built for education and demonstration — not for actual diagnosis
+- Flags signs *consistent with* pneumonia — it does not diagnose severity, type (bacterial vs. viral), or any other condition
+- Built for education and demonstration — not for actual clinical use
 
 ---
 
 ## A note on process
 
-This project started from a publicly available Kaggle tutorial notebook, which I used to learn the core workflow of building and training a CNN for image classification. From there, I adjusted the training setup, evaluated both models independently, wrote my own analysis, and deployed the final model as a live app. I think being upfront about that starting point — rather than pretending it began from a blank file — is part of doing this honestly.
+This project started from a publicly available Kaggle tutorial notebook, which I used to learn the core workflow of building and training a CNN for image classification. From there, I adjusted the training setup, evaluated both models independently, added Grad-CAM interpretability, wrote my own analysis, and deployed the final model as a live app. I think being upfront about that starting point — rather than pretending it began from a blank file — is part of doing this honestly.
 
 ---
 
 ## Tech Stack
 
-`Python` · `TensorFlow / Keras` · `Kaggle Notebooks (GPU)` · `Streamlit` · `GitHub` ·  `hugging face hub (model hosting) ` ·  `Github `
+`Python` · `TensorFlow / Keras` · `Kaggle Notebooks (GPU)` · `Streamlit` · `Hugging Face Hub (model hosting)` · `Grad-CAM` · `GitHub`
 
 ---
 

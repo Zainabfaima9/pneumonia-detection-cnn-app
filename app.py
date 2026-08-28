@@ -104,32 +104,68 @@ def preprocess_for_vgg16(pil_image):
     return np.expand_dims(arr, axis=0)
 
 
-def find_last_conv_layer(model):
-    for layer in reversed(model.layers):
+def find_last_conv_layer(model, min_size=6):
+    """Pick the deepest Conv2D layer whose output resolution is still large
+    enough for a meaningful heatmap. The literal last Conv2D layer in a CNN
+    is often pooled down to a tiny size (e.g. 2x2 or even 1x1), which produces
+    a Grad-CAM heatmap that's just one or two giant color blocks instead of a
+    localized map — this picks the deepest layer that avoids that."""
+    candidates = []
+    for layer in model.layers:
         if isinstance(layer, tf.keras.layers.Conv2D):
-            return layer.name
-    return None
+            try:
+                shape = layer.output_shape
+                h = shape[1]
+                candidates.append((layer.name, h))
+            except Exception:
+                continue
+    if not candidates:
+        return None
+    for name, h in reversed(candidates):
+        if h is not None and h >= min_size:
+            return name
+    return candidates[-1][0]
 
 
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name):
+    """Grad-CAM++ — a refinement of Grad-CAM that weights pixel importance using
+    higher-order gradients, giving sharper, more accurate localization when an
+    X-ray has multiple or overlapping regions of concern (common in pneumonia,
+    which often shows patches in more than one part of the lungs)."""
     grad_model = tf.keras.models.Model(
         [model.inputs], [model.get_layer(last_conv_layer_name).output, model.output]
     )
-    with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model(img_array)
-        loss = predictions[:, 0]
-    grads = tape.gradient(loss, conv_outputs)
-    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
-    conv_outputs = conv_outputs[0]
-    heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
-    heatmap = tf.squeeze(heatmap)
-    heatmap = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-8)
+
+    with tf.GradientTape() as tape1:
+        with tf.GradientTape() as tape2:
+            with tf.GradientTape() as tape3:
+                conv_output, predictions = grad_model(img_array)
+                output = predictions[:, 0]
+            first_derivative = tape3.gradient(output, conv_output)
+        second_derivative = tape2.gradient(first_derivative, conv_output)
+    third_derivative = tape1.gradient(second_derivative, conv_output)
+
+    global_sum = tf.reduce_sum(conv_output, axis=(1, 2), keepdims=True)
+
+    alpha_denom = second_derivative * 2.0 + third_derivative * global_sum
+    alpha_denom = tf.where(alpha_denom != 0.0, alpha_denom, tf.ones_like(alpha_denom))
+    alphas = second_derivative / (alpha_denom + 1e-10)
+
+    alpha_norm = tf.reduce_sum(alphas, axis=(1, 2), keepdims=True)
+    alphas = alphas / (alpha_norm + 1e-10)
+
+    weights = tf.maximum(first_derivative, 0.0)
+    deep_weights = tf.reduce_sum(alphas * weights, axis=(1, 2))
+
+    cam = tf.reduce_sum(deep_weights[:, tf.newaxis, tf.newaxis, :] * conv_output, axis=-1)
+    heatmap = tf.squeeze(tf.nn.relu(cam))
+    heatmap = heatmap / (tf.math.reduce_max(heatmap) + 1e-8)
     return heatmap.numpy()
 
 
 def overlay_heatmap(pil_image, heatmap, size):
     import matplotlib.cm as cm
-    heatmap_img = Image.fromarray(np.uint8(255 * heatmap)).resize(size)
+    heatmap_img = Image.fromarray(np.uint8(255 * heatmap)).resize(size, Image.BICUBIC)
     heatmap_arr = np.array(heatmap_img)
     colored = np.uint8(cm.jet(heatmap_arr / 255.0)[:, :, :3] * 255)
     base = np.array(pil_image.convert("RGB").resize(size))
@@ -144,7 +180,7 @@ def run_full_analysis(image, cnn_model, vgg_model):
     last_conv = find_last_conv_layer(cnn_model)
     heatmap = make_gradcam_heatmap(cnn_input, cnn_model, last_conv) if last_conv else None
     overlay = overlay_heatmap(image, heatmap, size=(320, 320)) if heatmap is not None else None
-    return cnn_score, vgg_score, overlay
+    return cnn_score, vgg_score, overlay, last_conv
 
 
 def show_verdict(score, threshold=0.5):
@@ -197,7 +233,7 @@ if page == "Home":
         This project explores a narrower question than *"can AI diagnose
         pneumonia?"* — **can AI help make sure the most urgent X-rays are seen
         first?** I built and compared two models (a custom CNN and a VGG16
-        transfer-learning model), added Grad-CAM interpretability, and deployed
+        transfer-learning model), added Grad-CAM++ interpretability, and deployed
         both as this live tool.
         """
     )
@@ -229,7 +265,7 @@ if page == "Home":
 # ---------------------------------------------------------
 elif page == "Diagnose an X-ray":
     st.title("Diagnose an X-ray")
-    st.write("Upload an X-ray or pick a sample — both models' predictions and the Grad-CAM heatmap appear together.")
+    st.write("Upload an X-ray or pick a sample — both models' predictions and the Grad-CAM++ heatmap appear together.")
 
     source = st.radio("Image source", ["Upload my own", "Use a sample"], horizontal=True, label_visibility="collapsed")
 
@@ -254,7 +290,7 @@ elif page == "Diagnose an X-ray":
         with st.spinner("Analyzing..."):
             cnn_model = load_cnn_model()
             vgg_model = load_vgg16_model()
-            cnn_score, vgg_score, gradcam_overlay = run_full_analysis(image, cnn_model, vgg_model)
+            cnn_score, vgg_score, gradcam_overlay, gradcam_layer = run_full_analysis(image, cnn_model, vgg_model)
 
         with col_results:
             st.subheader("Predictions")
@@ -276,17 +312,17 @@ elif page == "Diagnose an X-ray":
                 st.warning("⚠️ Models disagree — a case that would benefit most from radiologist review.")
 
         st.divider()
-        st.subheader("Grad-CAM: where the model is looking")
+        st.subheader("Grad-CAM++: where the model is looking")
         if gradcam_overlay is not None:
             g1, g2 = st.columns(2)
             g1.image(image.resize((320, 320)), caption="Original")
-            g2.image(gradcam_overlay, caption="Grad-CAM (Custom CNN)")
+            g2.image(gradcam_overlay, caption="Grad-CAM++ (Custom CNN)")
             st.caption(
-                "Warmer regions show what most influenced the prediction — ideally "
-                "the lung fields, not bone or background."
+                f"Warmer regions show what most influenced the prediction — ideally "
+                f"the lung fields, not bone or background. (Layer used: `{gradcam_layer}`)"
             )
         else:
-            st.warning("Could not generate a Grad-CAM heatmap for this model.")
+            st.warning("Could not generate a Grad-CAM++ heatmap for this model.")
 
 # ---------------------------------------------------------
 # MODEL COMPARISON
@@ -311,7 +347,7 @@ elif page == "Model Comparison":
         learn to see from zero on a comparatively small medical dataset.
 
         In deployment, VGG16 would drive triage decisions, with the custom CNN
-        kept as a lightweight baseline and for the Grad-CAM view — the same
+        kept as a lightweight baseline and for the Grad-CAM++ view — the same
         transfer-learning approach most production medical-imaging AI relies on.
         """
     )

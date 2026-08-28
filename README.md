@@ -9,6 +9,8 @@
 
 **[🚀 Live App](#live-demo)** · **[📊 Results](#results)** · **[🧠 Grad-CAM](#model-interpretability-grad-cam)** · **[🖥️ App Walkthrough](#app-walkthrough)** · **[⚙️ Run Locally](#run-locally)**
 
+🤗 [**Custom CNN model**](https://huggingface.co/zainabfatima9/pnemonia-cnn-model) · 🤗 [**VGG16 model**](https://huggingface.co/zainabfatima9/pneumonia-vgg16-model) · 💻 [**Source code**](https://github.com/Zainabfaima9/pneumonia-detection-cnn-app)
+
 ---
 
 ## Table of Contents
@@ -24,11 +26,14 @@
 9. [Live Demo](#live-demo)
 10. [Run Locally](#run-locally)
 11. [From Prototype to Practice](#from-prototype-to-practice)
-12. [Limitations](#limitations)
-13. [A Note on Process](#a-note-on-process)
-14. [Tech Stack](#tech-stack)
-15. [License](#license)
-16. [Author](#author)
+12. [Challenges Along the Way](#challenges-along-the-way)
+13. [Limitations](#limitations)
+14. [A Note on Process](#a-note-on-process)
+15. [Tech Stack](#tech-stack)
+16. [License](#license)
+17. [Responsible Use & Disclaimer](#responsible-use--disclaimer)
+18. [Project Links](#project-links)
+19. [Author](#author)
 
 ---
 
@@ -63,6 +68,8 @@ Pneumonia can move from mild to life-threatening within hours, especially in you
 
 Upload a chest X-ray → both models flag it as **Normal** or **showing signs consistent with Pneumonia**, in real time, alongside a Grad-CAM heatmap — all in one view, framed as a triage aid, not a diagnosis.
 
+**Workflow:** `Upload X-ray → Preprocessing → Dual Inference (CNN + VGG16) → Grad-CAM → Prediction + Priority Signal`
+
 | | |
 |---|---|
 | 🖼️ **Input** | Chest X-ray image (JPEG/PNG), uploaded or chosen from built-in samples |
@@ -83,17 +90,24 @@ The app is organized as five pages:
 - **Triage Queue Simulator** — upload a batch of X-rays (or use the built-in demo set) and watch them reordered into a prioritized reading queue, most urgent first
 - **Future Vision** — where this prototype would need to go to become a real clinical tool
 
-![Pneumonia Detection Result](Screenshot/pneumonia_result.png)
-![Normal Result](Screenshot/normal_result.png)
+*(See [Results](#results) below for screenshots of the app's predictions in action.)*
 
 ---
 
 ## Dataset
 
-- **Source:** [Chest X-Ray Images (Pneumonia) — Kaggle](https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia)
-- **Size:** ~5,800 labeled chest X-ray images
-- **Classes:** Normal, Pneumonia
-- **Preprocessing:** Resizing (128×128 grayscale for the CNN, 256×256 RGB for VGG16), normalization, train/test split
+- **Source:** [Chest X-Ray Images (Pneumonia) — Kaggle](https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia), originally collected from pediatric patients (ages 1–5) at Guangzhou Women and Children's Medical Center
+- **Total size:** 5,863 labeled chest X-ray images (JPEG), split into train / validation / test folders
+- **Class split:**
+
+  | Split | Normal | Pneumonia | Total |
+  |---|---|---|---|
+  | Train | 1,341 | 3,875 | 5,216 |
+  | Validation | 8 | 8 | 16 |
+  | Test | 234 | 390 | 624 |
+
+- **Class imbalance:** The training set is roughly 1:3 (Normal:Pneumonia) — a real-world imbalance worth flagging, since it can bias a model toward over-predicting the majority class if not accounted for
+- **Preprocessing:** Resizing (128×128 grayscale for the CNN, 256×256 RGB for VGG16), pixel normalization, binary labels (Normal / Pneumonia)
 
 ---
 
@@ -101,10 +115,10 @@ The app is organized as five pages:
 
 Two models were built and compared, to see how a model trained from scratch stacks up against transfer learning on a limited medical imaging dataset:
 
-1. **Custom CNN** — designed and trained from the ground up
-2. **VGG16 (Transfer Learning)** — a pretrained network fine-tuned on the chest X-ray dataset
+1. **Custom CNN** — a convolutional network designed and trained from the ground up, taking 128×128 grayscale input
+2. **VGG16 (Transfer Learning)** — a network pretrained on ImageNet, with its convolutional base reused and a new classification head fine-tuned on the chest X-ray dataset, taking 256×256 RGB input
 
-Both were trained for 15 epochs on an 80/20 train-test split, then evaluated on a held-out test set.
+Both models end in a single sigmoid output — framing this as a binary classification problem (Normal vs. Pneumonia) trained with binary cross-entropy loss — and were trained for 15 epochs on an 80/20 train-test split, then evaluated on a held-out test set.
 
 ---
 
@@ -117,14 +131,25 @@ Both were trained for 15 epochs on an 80/20 train-test split, then evaluated on 
 
 VGG16 came out ahead — and that gap is the interesting part, not just the numbers. It's a clear, hands-on demonstration of *why* transfer learning matters for medical imaging: the pretrained network arrived already knowing how to recognize general visual patterns, so it needed far less data to specialize in X-rays than a model starting from zero. In the app, VGG16 is presented as the recommended model for real deployment, with the CNN kept as a lightweight, interpretable baseline.
 
+> **Next step:** precision, recall, F1-score, and a confusion matrix would give a fuller picture than accuracy alone — especially since missed pneumonia cases (false negatives) matter more clinically than false alarms, and the training set's 1:3 class imbalance makes accuracy alone an incomplete metric. This is a planned addition (see [Future Vision](#from-prototype-to-practice)).
+
+### Sample Predictions
+
+The app flags each X-ray as Normal or showing signs consistent with Pneumonia:
+
+![Pneumonia Detection Result](Screenshot/pneumonia_result.png)
+![Normal Result](Screenshot/normal_result.png)
+
+### Training Curves
+
+Training and validation accuracy/loss curves recorded across epochs for both models:
+
 ![Training Accuracy 1](Screenshot/training_accuracy.png)
 ![Training Accuracy 2](Screenshot/training_accuracy_1.png)
 ![Training Accuracy 3](Screenshot/training_accuracy_2.png)
 ![Training Accuracy 4](Screenshot/training_accuracy_3.png)
 ![Training Accuracy 5](Screenshot/training_accuracy_4.png)
 ![Training Accuracy 6](Screenshot/training_accuracy_5.png)
-
-> **Next step:** precision, recall, F1-score, and a confusion matrix would give a fuller picture than accuracy alone — especially since missed pneumonia cases (false negatives) matter more clinically than false alarms. This is a planned addition (see [Future Vision](#from-prototype-to-practice)).
 
 ---
 
@@ -220,6 +245,27 @@ None of these were dramatic failures, but they were the kind of small, real debu
 ## License
 
 This project is licensed under the [MIT License](LICENSE) — free to use, modify, and share with attribution.
+
+---
+
+## Responsible Use & Disclaimer
+
+This project is intended for **educational, research, and demonstration purposes only**.
+
+The tool flags signs *consistent with* pneumonia to support prioritization of radiologist review — it does **not** diagnose disease and is **not intended to replace radiologists, radiographers, or other qualified healthcare professionals**. Any decision regarding diagnosis, image acceptability, or clinical action must remain under appropriate professional oversight.
+
+Before any real-world clinical use, a system like this would require independent external validation, multi-site testing, clinical workflow evaluation, and applicable medical device regulatory review (e.g. FDA, CE marking).
+
+> **AI should support professional judgment — not replace it.**
+
+---
+
+## Project Links
+
+- 🌐 [Live Streamlit App](https://pneumonia-detection-cnn-app-a4j2vpt7bpfvfqzupxdjwn.streamlit.app/)
+- 🤗 [Custom CNN Model — Hugging Face](https://huggingface.co/zainabfatima9/pnemonia-cnn-model)
+- 🤗 [VGG16 Model — Hugging Face](https://huggingface.co/zainabfatima9/pneumonia-vgg16-model)
+- 💻 [Source Code — GitHub](https://github.com/Zainabfaima9/pneumonia-detection-cnn-app)
 
 ---
 

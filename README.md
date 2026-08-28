@@ -1,32 +1,90 @@
 # 🫁 AI-Assisted Pneumonia Triage from Chest X-Rays
 
-> A prototype tool that flags chest X-rays showing signs consistent with pneumonia — built by a Medical Imaging Technology student to explore how AI can support imaging workflows, not replace radiologist interpretation.
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.15-orange?logo=tensorflow&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-Live%20App-FF4B4B?logo=streamlit&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-**[🚀 Try the live app](#Live-demo)** &nbsp;|&nbsp; **[📊 View results](#results)** &nbsp;|&nbsp; **[🧠 Model interpretability](#model-interpretability-grad-cam)**
+> A prototype tool that flags chest X-rays showing signs consistent with pneumonia and helps prioritize which scans a radiologist reviews first — built by a Medical Imaging Technology student to explore how AI can support imaging workflows, not replace radiologist interpretation.
+
+**[🚀 Live App](#live-demo)** · **[📊 Results](#results)** · **[🧠 Grad-CAM](#model-interpretability-grad-cam)** · **[🖥️ App Walkthrough](#app-walkthrough)** · **[⚙️ Run Locally](#run-locally)**
 
 ---
 
-## Why this project
+## Table of Contents
+
+1. [Why This Project](#why-this-project)
+2. [Public Health Context](#public-health-context)
+3. [What It Does](#what-it-does)
+4. [App Walkthrough](#app-walkthrough)
+5. [Dataset](#dataset)
+6. [Methodology](#methodology)
+7. [Results](#results)
+8. [Model Interpretability (Grad-CAM)](#model-interpretability-grad-cam)
+9. [Live Demo](#live-demo)
+10. [Run Locally](#run-locally)
+11. [From Prototype to Practice](#from-prototype-to-practice)
+12. [Limitations](#limitations)
+13. [A Note on Process](#a-note-on-process)
+14. [Tech Stack](#tech-stack)
+15. [License](#license)
+16. [Author](#author)
+
+---
+
+## Why This Project
 
 I'm a Medical Imaging Technologist, not a radiologist — and that distinction is the actual starting point of this project. Technologists don't diagnose. We capture images and manage the workflow that decides how fast a patient's scan gets seen. In many settings, that workflow is the real bottleneck: a scan can be technically perfect and still sit in a queue if there aren't enough specialists to read it in time.
 
-That's the gap I wanted to explore, hands-on: not "can AI diagnose pneumonia," but **can AI help prioritize which X-rays need a radiologist's eyes first?** So I taught myself Python from scratch, built and compared two deep learning models, and deployed one as a live web app that flags X-rays showing signs consistent with pneumonia for prioritized review (the CNN model-see live demo below).
+That's the gap I wanted to explore, hands-on: not *"can AI diagnose pneumonia,"* but **can AI help prioritize which X-rays need a radiologist's eyes first?** So I taught myself the core deep learning workflow, built and compared two models, added interpretability so predictions aren't a black box, and deployed both as a live multi-page web app that simulates what a triage-assisted reading workflow could look like.
 
 This project is also a marker of the direction I want to take my career — staying rooted in imaging technology while building the technical fluency to design AI tools that actually fit into how imaging departments work, not just tools that score well on a test set.
 
 ---
 
-## What it does
+## Public Health Context
 
-Upload a chest X-ray → the model flags it as **Normal** or **showing signs consistent with Pneumonia**, in real time, through a live web app — framed as a triage aid, not a diagnosis.
+Pneumonia isn't a rare or abstract disease — it's one of the world's leading causes of death, and the framing behind why triage speed matters at all:
 
 | | |
 |---|---|
-| 🖼️ **Input** | Chest X-ray image (JPEG/PNG) |
-| 🧠 **Models** | Custom CNN \| VGG16 (Transfer Learning) |
-| 👁️ **Interpretability** | Grad-CAM heatmaps — shows *where* the model is looking |
-| ⚡ **Output** | Instant flag + visual explanation |
+| 🌍 **Global cases per year** | ~450 million (roughly 7% of the world's population) |
+| ⚰️ **Global deaths per year** | ~4 million |
+| 🧒 **Child deaths under 5 (2021)** | 500,000+ — the leading infectious killer of children worldwide |
+| 🇵🇰 **Pakistan** | Repeatedly ranked by WHO, UNICEF, and Global Burden of Disease estimates among the countries with the highest child pneumonia death tolls globally, alongside India, Nigeria, and the DR Congo |
+
+*(Figures are approximate, drawn from publicly available WHO/UNICEF/GBD reporting; exact numbers vary by year and source.)*
+
+Pneumonia can move from mild to life-threatening within hours, especially in young children and elderly patients. Early diagnosis directly changes outcomes — earlier antibiotics, earlier oxygen support, fewer complications. That urgency is exactly why *triage speed*, not just detection accuracy, is the problem this project focuses on.
+
+---
+
+## What It Does
+
+Upload a chest X-ray → both models flag it as **Normal** or **showing signs consistent with Pneumonia**, in real time, alongside a Grad-CAM heatmap — all in one view, framed as a triage aid, not a diagnosis.
+
+| | |
+|---|---|
+| 🖼️ **Input** | Chest X-ray image (JPEG/PNG), uploaded or chosen from built-in samples |
+| 🧠 **Models** | Custom CNN **and** VGG16 (Transfer Learning) — run and compared side by side |
+| 👁️ **Interpretability** | Grad-CAM heatmap generated in the same step as the prediction |
+| 📋 **Triage simulation** | Batch upload reordered into a prioritized reading queue by urgency |
 | 🌐 **Deployment** | Streamlit Cloud, live and public |
+
+---
+
+## App Walkthrough
+
+The app is organized as five pages:
+
+- **Home** — project introduction and the public health context above
+- **Diagnose an X-ray** — upload an image or pick a built-in sample; see the Custom CNN and VGG16 predictions *and* the Grad-CAM heatmap together in a single result, including a flag when the two models disagree
+- **Model Comparison** — accuracy comparison and an explanation of why VGG16 (transfer learning) is the stronger, recommended model
+- **Triage Queue Simulator** — upload a batch of X-rays (or use the built-in demo set) and watch them reordered into a prioritized reading queue, most urgent first
+- **Future Vision** — where this prototype would need to go to become a real clinical tool
+
+![Pneumonia Detection Result](Screenshot/pneumonia_result.png)
+![Normal Result](Screenshot/normal_result.png)
 
 ---
 
@@ -35,7 +93,7 @@ Upload a chest X-ray → the model flags it as **Normal** or **showing signs con
 - **Source:** [Chest X-Ray Images (Pneumonia) — Kaggle](https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia)
 - **Size:** ~5,800 labeled chest X-ray images
 - **Classes:** Normal, Pneumonia
-- **Preprocessing:** Resizing, normalization, train/test split
+- **Preprocessing:** Resizing (128×128 grayscale for the CNN, 256×256 RGB for VGG16), normalization, train/test split
 
 ---
 
@@ -52,12 +110,12 @@ Both were trained for 15 epochs on an 80/20 train-test split, then evaluated on 
 
 ## Results
 
-| Model | Test Accuracy |
-|---|---|
-| Custom CNN | **89%** |
-| VGG16 (Transfer Learning) | **92%** ✅ |
+| Model | Test Accuracy | Input |
+|---|---|---|
+| Custom CNN | **89%** | 128×128 grayscale |
+| VGG16 (Transfer Learning) | **92%** ✅ | 256×256 RGB |
 
-VGG16 came out ahead — and that gap is the interesting part, not just the numbers. It's a clear, hands-on demonstration of *why* transfer learning matters for medical imaging: the pretrained network arrived already knowing how to recognize general visual patterns, so it needed far less data to specialize in X-rays than a model starting from zero.
+VGG16 came out ahead — and that gap is the interesting part, not just the numbers. It's a clear, hands-on demonstration of *why* transfer learning matters for medical imaging: the pretrained network arrived already knowing how to recognize general visual patterns, so it needed far less data to specialize in X-rays than a model starting from zero. In the app, VGG16 is presented as the recommended model for real deployment, with the CNN kept as a lightweight, interpretable baseline.
 
 ![Training Accuracy 1](Screenshot/training_accuracy.png)
 ![Training Accuracy 2](Screenshot/training_accuracy_1.png)
@@ -66,15 +124,13 @@ VGG16 came out ahead — and that gap is the interesting part, not just the numb
 ![Training Accuracy 5](Screenshot/training_accuracy_4.png)
 ![Training Accuracy 6](Screenshot/training_accuracy_5.png)
 
-![Pneumonia Detection Result](Screenshot/pneumonia_result.png)
-
-![Normal Result](Screenshot/normal_result.png)
+> **Next step:** precision, recall, F1-score, and a confusion matrix would give a fuller picture than accuracy alone — especially since missed pneumonia cases (false negatives) matter more clinically than false alarms. This is a planned addition (see [Future Vision](#from-prototype-to-practice)).
 
 ---
 
 ## Model Interpretability (Grad-CAM)
 
-A high accuracy score means nothing to a clinician if they can't see *why* the model made a call — and for a tool meant to support a real imaging workflow, that trust gap is the whole problem, not a footnote. So I applied **Grad-CAM (Gradient-weighted Class Activation Mapping)** to visualize which regions of each X-ray most influenced the model's prediction.
+A high accuracy score means nothing to a clinician if they can't see *why* the model made a call — and for a tool meant to support a real imaging workflow, that trust gap is the whole problem, not a footnote. So I applied **Grad-CAM (Gradient-weighted Class Activation Mapping)** to visualize which regions of each X-ray most influenced the model's prediction, generated live alongside every prediction in the app.
 
 ![Grad-CAM Heatmap](Screenshot/gradcam_result.png)
 
@@ -84,20 +140,41 @@ On the pneumonia-flagged X-ray above, the heatmap concentrates on the lower lung
 
 ## Live Demo
 
-**[Try it yourself → https://pneumonia-detection-cnn-app-a4j2vpt7bpfvfqzupxdjwn.streamlit.app/](#)**
+**[Try it yourself → pneumonia-detection-cnn-app-a4j2vpt7bpfvfqzupxdjwn.streamlit.app](https://pneumonia-detection-cnn-app-a4j2vpt7bpfvfqzupxdjwn.streamlit.app/)**
 
-Upload any chest X-ray and see the model's prediction instantly *(this demo uses the CNN model; VGG16 results are shown above for comparison)*. The trained model is hosted on Hugging Face Hub and loaded dynamically by the app, due to file size constraints on GitHub.
+Upload any chest X-ray, or pick a built-in sample, and see both models' predictions plus a Grad-CAM heatmap instantly. Both trained models are hosted on Hugging Face Hub and loaded dynamically by the app, due to file size constraints on GitHub.
+
+---
+
+## Run Locally
+
+```bash
+# Clone the repository
+git clone https://github.com/Zainabfaima9/pneumonia-detection-cnn-app.git
+cd pneumonia-detection-cnn-app
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the app
+streamlit run app.py
+```
+
+The app will open at `http://localhost:8501`. Model weights are downloaded automatically from Hugging Face Hub on first run.
 
 ---
 
 ## From Prototype to Practice
 
-Building the model was the easy part. Turning it into something an imaging department could actually trust and use is a different problem entirely — and it's the problem I'm more interested in than the model itself:
+Building the models was the easy part. Turning this into something an imaging department could actually trust and use is a different problem entirely — and it's the problem I'm more interested in than the model itself:
 
-- **Workflow fit:** A triage tool only helps if it plugs into how technologists already prioritize studies — not if it adds a second system to check.
-- **Clinical validation:** This model has seen one small, single-source dataset. Real deployment would require testing across diverse patient populations, scanner types, and clinical sites.
-- **Regulatory pathway:** Any AI tool touching patient care — even a triage aid, not a diagnostic one — needs a clear route through medical device regulation (e.g., FDA, CE marking) before it can be used outside a research setting.
-- **Trust and adoption:** Explainability tools like Grad-CAM are a start, but adoption ultimately depends on technologists and radiologists being part of building the tool, not just receiving it.
+- **Workflow integration:** Connect directly to a hospital's PACS/RIS system so flagged X-rays are automatically bumped up in the radiologist's reading list, instead of requiring a separate app.
+- **Multi-class detection:** Extend beyond Normal vs. Pneumonia to distinguish bacterial vs. viral pneumonia, and flag other common findings (e.g. pleural effusion, TB-suggestive patterns), since these change treatment decisions.
+- **Severity scoring:** Move from a binary flag to a severity score, so radiologists see not just "pneumonia present" but a rough sense of how urgent the case is.
+- **Larger, multi-site validation:** Test and retrain on X-rays from multiple hospitals, scanner types, and patient populations — this prototype has only seen one relatively small, single-source dataset.
+- **Edge deployment:** A lightweight version that can run on modest hardware in clinics without a radiologist on-site, where triage delay is often the biggest problem.
+- **Regulatory pathway:** Any tool that touches real patient care — even a triage aid, not a diagnostic one — needs to go through proper medical device regulation (e.g. FDA, CE marking) before real-world use.
+- **Combined imaging dashboard:** Pair this with other imaging AI tools (such as a CT image-quality/dose-optimization tool) into a single department-wide triage and quality dashboard, rather than a standalone app.
 
 This is the layer I want to spend my career working in: not just building models, but understanding how a promising prototype like this one actually becomes a tool a hospital would adopt.
 
@@ -109,23 +186,48 @@ This is the layer I want to spend my career working in: not just building models
 - No demographic diversity metadata available
 - Not validated against real clinical outcomes
 - Flags signs *consistent with* pneumonia — it does not diagnose severity, type (bacterial vs. viral), or any other condition
+- Grad-CAM is currently available for the Custom CNN only, not yet for VGG16
 - Built for education and demonstration — not for actual clinical use
 
 ---
 
-## A note on process
+## A Note on Process
 
-This project started from a publicly available Kaggle tutorial notebook, which I used to learn the core workflow of building and training a CNN for image classification. From there, I adjusted the training setup, evaluated both models independently, added Grad-CAM interpretability, wrote my own analysis, and deployed the final model as a live app. I think being upfront about that starting point — rather than pretending it began from a blank file — is part of doing this honestly.
+This project started from a publicly available Kaggle tutorial notebook, which I used to learn the core workflow of building and training a CNN for image classification. From there, I adjusted the training setup, evaluated both models independently, added Grad-CAM interpretability, built out the multi-page triage app, wrote my own analysis, and deployed the final result as a live tool. I think being upfront about that starting point — rather than pretending it began from a blank file — is part of doing this honestly.
 
 ---
 
 ## Tech Stack
 
-`Python` · `TensorFlow / Keras` · `Kaggle Notebooks (GPU)` · `Streamlit` · `Hugging Face Hub (model hosting)` · `Grad-CAM` · `GitHub`
+`Python` · `TensorFlow / Keras` · `Kaggle Notebooks (GPU)` · `Streamlit` · `Hugging Face Hub (model hosting)` · `Grad-CAM` · `Matplotlib` · `GitHub`
+
+---
+
+## Challenges Along the Way
+
+This project didn't come together in a straight line, and I think that's worth documenting honestly rather than smoothing over:
+
+- **Input shape mismatches:** Early on, I assumed VGG16 needed the standard 224×224 input size. When I connected it to the live app, deployment failed with a shape error (`expected shape=(None, 256, 256, 3), found shape=(None, 224, 224, 3)`) — the model was actually trained on 256×256 images. It was a reminder that preprocessing in a deployed app has to match training exactly, not just follow a textbook default.
+- **Large model files vs GitHub's limits:** The Custom CNN was small enough to deploy without much trouble, but VGG16 — being a much deeper, pretrained network — produced a far larger model file that GitHub couldn't accept directly and that took noticeably longer to load. I ended up hosting both models on Hugging Face Hub and loading them dynamically at runtime with `huggingface_hub`, which kept the repository lightweight and made deployment reliable. This wasn't just a packaging inconvenience — it's a real, recurring trade-off in medical imaging AI: a more accurate model is often a heavier one, and any tool meant for a busy clinical setting (or a low-resource clinic with limited hardware, as discussed in [Future Vision](#from-prototype-to-practice)) has to weigh accuracy against deployability, not just chase the highest test score.
+- **A subtle Streamlit bug:** After adding the dual-model comparison, the app started printing raw internal Streamlit objects (a `DeltaGenerator` and its full docstring) onto the page instead of a clean result. The cause was a one-line `st.error(...) if condition else st.success(...)` written as a standalone statement — Streamlit's "magic" auto-display feature was treating that expression's return value as something to render. Rewriting it as an explicit `if/else` block fixed it. A small bug, but a good lesson in how Streamlit's implicit behavior can surprise you.
+- **Model format differences:** The CNN was saved as `.h5` and VGG16 as `.keras` — Keras' two supported save formats — which meant double-checking that both loaded correctly through the same `tf.keras.models.load_model()` call.
+- **Deprecation warnings:** Streamlit flagged `use_container_width` as deprecated mid-project, which meant updating image-display calls to the newer `width="stretch"` parameter to keep the app future-proof.
+
+None of these were dramatic failures, but they were the kind of small, real debugging moments that don't show up in a tutorial — and they taught me more about actually shipping a model than the training step did.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE) — free to use, modify, and share with attribution.
 
 ---
 
 ## Author
 
 **Zainab Fatima**
-BS Medical Imaging Technology
+BS Medical Imaging Technology — 7th semester
+
+I'm currently in my final year of a BS in Medical Imaging Technology, and this project sits at the intersection of the two things I want my career to be built on: hands-on clinical imaging experience, and the technical skill to build AI tools that actually fit into how imaging departments work. I'm applying for opportunities to continue this work at a graduate level, and this project — bugs, rewrites, and all — is my way of showing that process rather than just the polished result.
+
+*[Add your email / LinkedIn / GitHub profile link here]*

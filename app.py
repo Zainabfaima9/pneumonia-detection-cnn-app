@@ -14,7 +14,7 @@ from huggingface_hub import hf_hub_download
 # =========================================================
 
 CNN_INPUT_SIZE = (128, 128)     # grayscale, matches your existing CNN app
-VGG16_INPUT_SIZE = (224, 224)   # standard VGG16 input — CHANGE if you trained differently
+VGG16_INPUT_SIZE = (256, 256)   # confirmed from deployment error: model expects 256x256x3
 
 # =========================================================
 # 📁 SAMPLE IMAGES — you need to add these yourself
@@ -130,28 +130,49 @@ def run_full_analysis(image, cnn_model, vgg_model):
 # Sidebar navigation
 # ---------------------------------------------------------
 st.sidebar.title("🫁 Pneumonia Triage AI")
+
+st.sidebar.markdown(
+    """
+    **About this project**
+
+    Built by **Zainab Fatima**, a Medical Imaging Technology student, to explore
+    a narrower question than *"can AI diagnose pneumonia?"* — namely, **can AI
+    help prioritize which chest X-rays need a radiologist's eyes first?**
+
+    A prototype triage aid, not a diagnostic tool.
+    """
+)
+st.sidebar.markdown("---")
+
 page = st.sidebar.radio(
     "Navigate",
     ["Home", "Diagnose an X-ray", "Model Comparison", "Triage Queue Simulator", "Future Vision"]
-)
-st.sidebar.markdown("---")
-st.sidebar.caption(
-    "A prototype triage aid, not a diagnostic tool. "
-    "Built by a Medical Imaging Technology student."
 )
 
 # ---------------------------------------------------------
 # HOME
 # ---------------------------------------------------------
 if page == "Home":
-    st.title("AI-Assisted Pneumonia Triage from Chest X-Rays")
+    st.title("🫁 AI-Assisted Pneumonia Triage from Chest X-Rays")
+    st.caption("A prototype triage tool by Zainab Fatima — Medical Imaging Technology")
 
     st.markdown(
         """
-        Technologists don't diagnose — we capture images and manage the workflow
-        that decides how fast a patient's scan gets seen. In many settings, that
-        workflow is the real bottleneck: a scan can be technically perfect and
-        still sit in a queue if there aren't enough specialists to read it in time.
+        ### About Me & This Project
+
+        I'm a Medical Imaging Technology student — not a radiologist — and that
+        distinction is the actual starting point of this project. Technologists
+        don't diagnose. We capture images and manage the workflow that decides how
+        fast a patient's scan gets seen. In many settings, that workflow is the
+        real bottleneck: a scan can be technically perfect and still sit in a queue
+        if there aren't enough specialists to read it in time.
+
+        That's the gap I wanted to explore hands-on: not *"can AI diagnose
+        pneumonia?"*, but **can AI help prioritize which X-rays need a
+        radiologist's eyes first?** So I taught myself deep learning from scratch,
+        built and compared two models (a custom CNN and a VGG16 transfer-learning
+        model), added Grad-CAM interpretability so predictions aren't a black box,
+        and deployed both as this live triage tool.
         """
     )
 
@@ -238,7 +259,7 @@ elif page == "Diagnose an X-ray":
         col_img, col_results = st.columns([1, 2])
 
         with col_img:
-            st.image(image, caption="X-ray being analyzed", use_container_width=True)
+            st.image(image, caption="X-ray being analyzed", width="stretch")
 
         with st.spinner("Loading models and analyzing..."):
             cnn_model = load_cnn_model()

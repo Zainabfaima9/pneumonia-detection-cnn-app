@@ -126,12 +126,38 @@ Both models end in a single sigmoid output — framing this as a binary classifi
 
 | Model | Test Accuracy | Input |
 |---|---|---|
-| Custom CNN | **89%** | 128×128 grayscale |
-| VGG16 (Transfer Learning) | **92%** ✅ | 256×256 RGB |
+| Custom CNN | **87.8%** | 128×128 grayscale |
+| VGG16 (Transfer Learning) | **92.3%** ✅ | 256×256 RGB |
 
 VGG16 came out ahead — and that gap is the interesting part, not just the numbers. It's a clear, hands-on demonstration of *why* transfer learning matters for medical imaging: the pretrained network arrived already knowing how to recognize general visual patterns, so it needed far less data to specialize in X-rays than a model starting from zero. In the app, VGG16 is presented as the recommended model for real deployment, with the CNN kept as a lightweight, interpretable baseline.
 
-> **Next step:** precision, recall, F1-score, and a confusion matrix would give a fuller picture than accuracy alone — especially since missed pneumonia cases (false negatives) matter more clinically than false alarms, and the training set's 1:3 class imbalance makes accuracy alone an incomplete metric. This is a planned addition (see [Future Vision](#from-prototype-to-practice)).
+### Class-Wise Performance
+
+Evaluated on the full 624-image held-out test set (234 Normal, 390 Pneumonia):
+
+**Custom CNN**
+
+| Class | Precision | Recall | F1-Score |
+|---|---|---|---|
+| Normal | 0.916 | 0.744 | 0.821 |
+| Pneumonia | 0.862 | 0.959 | 0.908 |
+
+**VGG16 (Transfer Learning)**
+
+| Class | Precision | Recall | F1-Score |
+|---|---|---|---|
+| Normal | 0.956 | 0.833 | 0.890 |
+| Pneumonia | 0.907 | 0.977 | 0.941 |
+
+**Why this matters more than accuracy alone:** in a triage context, missing a real pneumonia case (a false negative) is the costliest kind of error — it's a patient who should have been prioritized but wasn't. The confusion matrices below make that concrete:
+
+- **Custom CNN:** missed 16 of 390 pneumonia cases (16 false negatives)
+- **VGG16:** missed only 9 of 390 pneumonia cases (9 false negatives)
+
+VGG16's higher pneumonia recall (97.7% vs. 95.9%) is a stronger reason to prefer it for triage than its accuracy edge alone — fewer urgent cases slip through undetected.
+
+![Custom CNN Confusion Matrix](Screenshot/custom_cnn_confusion_matrix.png)
+![VGG16 Confusion Matrix](Screenshot/vgg16_confusion_matrix.png)
 
 ### Sample Predictions
 

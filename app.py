@@ -104,34 +104,53 @@ def preprocess_for_vgg16(pil_image):
     return np.expand_dims(arr, axis=0)
 
 
-def find_last_conv_layer(model, min_size=6):
-    """Pick the deepest Conv2D layer whose output resolution is still large
-    enough for a meaningful heatmap. The literal last Conv2D layer in a CNN
-    is often pooled down to a tiny size (e.g. 2x2 or even 1x1), which produces
-    a Grad-CAM heatmap that's just one or two giant color blocks instead of a
-    localized map — this picks the deepest layer that avoids that."""
-    candidates = []
+def list_conv_layers(model, min_size=4):
+    """Returns all Conv2D layers with a usable spatial resolution, in order
+    from earliest to deepest, so different layers can be compared for the
+    best localization."""
+    layers = []
     for layer in model.layers:
         if isinstance(layer, tf.keras.layers.Conv2D):
             try:
-                shape = layer.output_shape
-                h = shape[1]
-                candidates.append((layer.name, h))
+                h = layer.output_shape[1]
+                if h is not None and h >= min_size:
+                    layers.append((layer.name, h))
             except Exception:
                 continue
-    if not candidates:
-        return None
-    for name, h in reversed(candidates):
-        if h is not None and h >= min_size:
-            return name
-    return candidates[-1][0]
+    return layers
+
+
+def find_last_conv_layer(model, min_size=6):
+    candidates = list_conv_layers(model, min_size=min_size)
+    if candidates:
+        return candidates[-1][0]
+    all_convs = [l.name for l in model.layers if isinstance(l, tf.keras.layers.Conv2D)]
+    return all_convs[-1] if all_convs else None
 
 
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name):
-    """Grad-CAM++ — a refinement of Grad-CAM that weights pixel importance using
-    higher-order gradients, giving sharper, more accurate localization when an
-    X-ray has multiple or overlapping regions of concern (common in pneumonia,
-    which often shows patches in more than one part of the lungs)."""
+    """Standard Grad-CAM — averages gradients across the feature map. More
+    numerically stable than Grad-CAM++ on ReLU-based CNNs, where higher-order
+    gradients can vanish and make Grad-CAM++ degrade to a flat, uninformative map."""
+    grad_model = tf.keras.models.Model(
+        [model.inputs], [model.get_layer(last_conv_layer_name).output, model.output]
+    )
+    with tf.GradientTape() as tape:
+        conv_outputs, predictions = grad_model(img_array)
+        loss = predictions[:, 0]
+    grads = tape.gradient(loss, conv_outputs)
+    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+    conv_outputs = conv_outputs[0]
+    heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
+    heatmap = tf.squeeze(heatmap)
+    heatmap = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-8)
+    return heatmap.numpy()
+
+
+def make_gradcam_pp_heatmap(img_array, model, last_conv_layer_name):
+    """Grad-CAM++ — weights pixel importance using higher-order gradients,
+    which can give sharper localization for multi-region findings, but can
+    also degrade to a flat map on ReLU-heavy CNNs where those gradients vanish."""
     grad_model = tf.keras.models.Model(
         [model.inputs], [model.get_layer(last_conv_layer_name).output, model.output]
     )
@@ -172,15 +191,21 @@ def overlay_heatmap(pil_image, heatmap, size):
     return Image.fromarray(np.uint8(base * 0.55 + colored * 0.45))
 
 
-def run_full_analysis(image, cnn_model, vgg_model):
+def run_predictions(image, cnn_model, vgg_model):
     cnn_input = preprocess_for_cnn(image)
     vgg_input = preprocess_for_vgg16(image)
     cnn_score = float(cnn_model.predict(cnn_input, verbose=0)[0][0])
     vgg_score = float(vgg_model.predict(vgg_input, verbose=0)[0][0])
-    last_conv = find_last_conv_layer(cnn_model)
-    heatmap = make_gradcam_heatmap(cnn_input, cnn_model, last_conv) if last_conv else None
-    overlay = overlay_heatmap(image, heatmap, size=(320, 320)) if heatmap is not None else None
-    return cnn_score, vgg_score, overlay, last_conv
+    return cnn_score, vgg_score
+
+
+def run_gradcam(image, cnn_model, layer_name, method="Grad-CAM++"):
+    cnn_input = preprocess_for_cnn(image)
+    if method == "Grad-CAM++":
+        heatmap = make_gradcam_pp_heatmap(cnn_input, cnn_model, layer_name)
+    else:
+        heatmap = make_gradcam_heatmap(cnn_input, cnn_model, layer_name)
+    return overlay_heatmap(image, heatmap, size=(320, 320))
 
 
 def show_verdict(score, threshold=0.5):
@@ -290,7 +315,7 @@ elif page == "Diagnose an X-ray":
         with st.spinner("Analyzing..."):
             cnn_model = load_cnn_model()
             vgg_model = load_vgg16_model()
-            cnn_score, vgg_score, gradcam_overlay, gradcam_layer = run_full_analysis(image, cnn_model, vgg_model)
+            cnn_score, vgg_score = run_predictions(image, cnn_model, vgg_model)
 
         with col_results:
             st.subheader("Predictions")
@@ -312,17 +337,42 @@ elif page == "Diagnose an X-ray":
                 st.warning("⚠️ Models disagree — a case that would benefit most from radiologist review.")
 
         st.divider()
-        st.subheader("Grad-CAM++: where the model is looking")
-        if gradcam_overlay is not None:
+        st.subheader("Grad-CAM: where the model is looking")
+
+        conv_layers = list_conv_layers(cnn_model)
+        if not conv_layers:
+            st.warning("No usable Conv2D layers found for visualization.")
+        else:
+            layer_names = [name for name, _ in conv_layers]
+            default_layer = layer_names[-1]
+
+            with st.expander("⚙️ Advanced: heatmap settings", expanded=False):
+                method = st.radio(
+                    "Method", ["Grad-CAM++", "Grad-CAM"], horizontal=True,
+                    help="Grad-CAM++ is usually sharper for multi-region findings, but can flatten out "
+                         "on some layers. If that happens, try standard Grad-CAM or a different layer below."
+                )
+                selected_layer = st.selectbox(
+                    "Conv layer to visualize",
+                    layer_names,
+                    index=layer_names.index(default_layer),
+                    help="Earlier layers = larger, blurrier regions. Deeper layers = smaller but more "
+                         "disease-specific regions. Try a few to see which one lines up with the actual opacity."
+                )
+
+            with st.spinner("Generating heatmap..."):
+                gradcam_overlay = run_gradcam(image, cnn_model, selected_layer, method=method)
+
             g1, g2 = st.columns(2)
             g1.image(image.resize((320, 320)), caption="Original")
-            g2.image(gradcam_overlay, caption="Grad-CAM++ (Custom CNN)")
+            g2.image(gradcam_overlay, caption=f"{method} — layer: {selected_layer}")
             st.caption(
-                f"Warmer regions show what most influenced the prediction — ideally "
-                f"the lung fields, not bone or background. (Layer used: `{gradcam_layer}`)"
+                "Warmer regions show what most influenced the prediction — ideally the "
+                "lung fields (and specifically the opacity, for a pneumonia-flagged X-ray), "
+                "not bone, edges, or background. If the heatmap doesn't line up with the "
+                "actual finding, that's worth noting as a real limitation of the model — "
+                "not something to hide."
             )
-        else:
-            st.warning("Could not generate a Grad-CAM++ heatmap for this model.")
 
 # ---------------------------------------------------------
 # MODEL COMPARISON

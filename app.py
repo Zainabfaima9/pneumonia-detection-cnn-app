@@ -37,10 +37,41 @@ st.set_page_config(page_title="Pneumonia Triage AI", page_icon="🫁", layout="w
 st.markdown(
     """
     <style>
-    .main .block-container {padding-top: 2rem; max-width: 1100px;}
-    h1 {font-weight: 700;}
-    [data-testid="stMetricValue"] {font-size: 1.6rem;}
-    .stAlert {border-radius: 8px;}
+    /* Overall layout */
+    .main .block-container {padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1100px;}
+
+    /* Headings */
+    h1 {font-weight: 700; color: #0E7C7B; letter-spacing: -0.5px;}
+    h2, h3 {font-weight: 600; color: #1A1A1A;}
+
+    /* Sidebar */
+    section[data-testid="stSidebar"] {background-color: #F0F5F5;}
+    section[data-testid="stSidebar"] h1 {font-size: 1.4rem; color: #0E7C7B;}
+
+    /* Metric cards */
+    [data-testid="stMetric"] {
+        background-color: #F7FAFA;
+        border: 1px solid #E1E8E8;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+    [data-testid="stMetricValue"] {font-size: 1.7rem; color: #0E7C7B;}
+    [data-testid="stMetricLabel"] {font-weight: 500;}
+
+    /* Alerts */
+    .stAlert {border-radius: 10px;}
+
+    /* Progress bars */
+    .stProgress > div > div > div > div {background-color: #0E7C7B;}
+
+    /* Tables */
+    table {border-radius: 8px; overflow: hidden;}
+
+    /* Dividers */
+    hr {margin: 1.5rem 0; border-color: #E1E8E8;}
+
+    /* Radio buttons horizontal spacing */
+    div[role="radiogroup"] {gap: 0.5rem;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -127,7 +158,15 @@ def show_verdict(score, threshold=0.5):
 # ---------------------------------------------------------
 # Sidebar
 # ---------------------------------------------------------
-st.sidebar.title("🫁 Pneumonia Triage AI")
+st.sidebar.markdown(
+    """
+    <div style="text-align:center; padding: 10px 0 4px 0;">
+        <span style="font-size: 2.2rem;">🫁</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+st.sidebar.title("Pneumonia Triage AI")
 st.sidebar.caption(
     "By **Zainab Fatima** · Medical Imaging Technology\n\n"
     "A prototype exploring whether AI can help prioritize which chest "
